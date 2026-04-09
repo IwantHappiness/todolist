@@ -1,0 +1,14 @@
+# set shell := ["powershell.exe", "-c"]
+
+default: run
+
+fmt:
+    #!pwsh -c
+    go fmt .
+
+run:
+    #!pwsh -c
+    go build .
+    ./TodoList.exe
+    # ./main.exe
+    break
