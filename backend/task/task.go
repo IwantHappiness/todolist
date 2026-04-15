@@ -16,10 +16,10 @@ var tasks map[int]Task = make(map[int]Task)
 type Task struct {
 	ID          int        `json:"id"`
 	Title       string     `json:"title"`
-	Created     time.Time  `json:"created"`
-	CompletedAt *time.Time `json:"completed_at"`
 	Description string     `json:"description"`
 	Completed   bool       `json:"completed"`
+	CreatedAt   time.Time  `json:"created_at"`
+	CompletedAt *time.Time `json:"completed_at"`
 }
 
 func NewTask(title, description string) Task {
@@ -34,7 +34,7 @@ func NewTask(title, description string) Task {
 	return Task{
 		ID:          id,
 		Title:       title,
-		Created:     time.Now(),
+		CreatedAt:   time.Now(),
 		Description: description,
 		Completed:   false,
 		CompletedAt: nil,
