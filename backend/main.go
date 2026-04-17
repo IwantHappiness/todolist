@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -9,8 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/IwantHappiness/TodoList/task"
+	"github.com/IwantHappiness/todolist/storage"
+	"github.com/IwantHappiness/todolist/task"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 var startTime = time.Now()
@@ -44,17 +47,31 @@ func newRouter() *gin.Engine {
 }
 
 func main() {
-	log.Println("Server starting")
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	log.Println("Loading .env succesfull")
 
+	log.Println("Server starting")
 	router := newRouter()
 
-	port := getEnv("PORT", "8080")
+	port := os.Getenv("PORT")
 
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: router,
 	}
 
+	ctx := context.Background()
+
+	dbUrl := os.Getenv("DATABASE_URL")
+	_, err := storage.CreateConnection(ctx, dbUrl)
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Connection db succerfull")
+
+	log.Println("Listen server")
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatal(err)
@@ -65,14 +82,16 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Server stop")
-}
+	log.Println("Shutting down server...")
 
-func getEnv(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown:", err)
 	}
-	return fallback
+
+	log.Println("Server stop")
 }
 
 func helloHandler(ctx *gin.Context) {
