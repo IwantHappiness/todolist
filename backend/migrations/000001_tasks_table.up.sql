@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 	id SERIAL PRIMARY KEY,
 	title VARCHAR(200) NOT NULL,
 	description VARCHAR(1024),
-	completed BOOLEAN NOT NULL,
+	completed BOOLEAN NOT NULL DEFAULT FALSE,
 	created_at TIMESTAMP NOT NULL,
-	compledet_at TIMESTAMP
+	completed_at TIMESTAMP
 );
