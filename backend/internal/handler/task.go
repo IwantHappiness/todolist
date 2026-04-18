@@ -15,8 +15,8 @@ type TaskHandler struct {
 	scv service.TaskService
 }
 
-func NewTaskHandler(scv service.TaskService) TaskHandler {
-	return TaskHandler{
+func NewTaskHandler(scv service.TaskService) *TaskHandler {
+	return &TaskHandler{
 		scv: scv,
 	}
 }
@@ -64,6 +64,10 @@ func (h *TaskHandler) GetAll(ctx *gin.Context) {
 	}
 
 	tasks, err := h.scv.GetByCompleted(ctx.Request.Context(), completed)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.ErrorDTO{Message: err.Error(), Time: time.Now()})
+		return
+	}
 
 	ctx.JSON(http.StatusOK, tasks)
 }
