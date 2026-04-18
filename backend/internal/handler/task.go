@@ -22,8 +22,6 @@ func NewTaskHandler(scv service.TaskService) TaskHandler {
 }
 
 func (h *TaskHandler) RegisterRouter(r *gin.Engine) {
-	gin.SetMode(gin.ReleaseMode)
-
 	tasks := r.Group("/tasks")
 	{
 		tasks.GET("", h.GetAll)

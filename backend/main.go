@@ -22,7 +22,7 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
-	log.Println("Loading .env succesfull")
+	log.Println("Loading .env succesful")
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -33,13 +33,13 @@ func main() {
 	}
 	defer conn.Close(context.Background())
 
-	log.Println("Connection db succerfull")
+	log.Println("Connected db succerful")
 
 	repo := repository.NewTaskPgRepository(conn)
 	scv := service.NewTaskService(repo)
 	handler := handler.NewTaskHandler(scv)
 
-	gin.SetMode(os.Getenv("GIN_MOD"))
+	gin.SetMode(os.Getenv("GIN_MODE"))
 	router := gin.Default()
 	handler.RegisterRouter(router)
 
