@@ -1,14 +1,17 @@
 services:
-  db:
+  postgres:
     image: postgres:16-alpine
     container_name: postgres
     restart: unless-stopped
 
-    env_file:
-      - .env
-
+    environment:
+      POSTGRES_DB: taskservice
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
@@ -19,7 +22,7 @@ services:
   migrate:
     image: migrate/migrate
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
 
     volumes:
@@ -30,7 +33,8 @@ services:
         "-path",
         "/migrations",
         "-database",
-        "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable",
+        "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_USER}:5432/${POSTGRES_DB}?sslmode=disable",
+        "postgres://postgres:postgres@postgres:5432/taskservice?sslmode=disable",
         "up",
       ]
 
@@ -38,21 +42,17 @@ services:
     build: .
     container_name: app
     restart: unless-stopped
-
+    environment:
+      HTTP_ADDR: :8080
+      DATABASE_DSN: postgres://postgres:postgres@postgres:5432/taskservice?sslmode=disable
+      GIN_MODE: release
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-
-    env_file:
-      - .env
-
-    volumes:
-      - ./.env:/app/.env:ro
-
     ports:
       - "8080:8080"
 
 volumes:
-  db_data:
+  postgres_data:
