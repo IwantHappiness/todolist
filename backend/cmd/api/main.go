@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,19 +16,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
-	}
-	log.Println("Loading .env succesful")
+	cfg := loadConfig()
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	conn, err := pgx.Connect(ctx, os.Getenv("DATABASE_URL"))
+	conn, err := pgx.Connect(ctx, cfg.DatabaseDSN)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v:", err)
 	}
@@ -39,21 +36,19 @@ func main() {
 	scv := service.NewTaskService(repo)
 	handler := handler.NewTaskHandler(scv)
 
-	gin.SetMode(os.Getenv("GIN_MODE"))
+	gin.SetMode(cfg.GIN_MODE)
 	router := gin.Default()
 	handler.RegisterRouter(router)
 
-	port := os.Getenv("PORT")
-
 	srv := &http.Server{
-		Addr:    ":" + port,
+		Addr:    cfg.HTTPAddr,
 		Handler: router,
 	}
 
 	log.Println("Server starting")
 
 	go func() {
-		log.Println("Server running on port " + port)
+		log.Println("Server running on port 8080")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to start server: %v", err)
 		}
@@ -70,4 +65,32 @@ func main() {
 	}
 
 	log.Println("Server stopped")
+}
+
+type config struct {
+	HTTPAddr    string
+	DatabaseDSN string
+	GIN_MODE    string
+}
+
+func loadConfig() config {
+	cfg := config{
+		HTTPAddr:    envOrDefault("HTTP_ADDR", ":8080"),
+		DatabaseDSN: envOrDefault("DATABASE_DSN", "postgres://postgres:postgres@localhost:5432/taskservice?sslmode=disable"),
+		GIN_MODE:    envOrDefault("GIN_MODE", "release"),
+	}
+
+	if cfg.DatabaseDSN == "" {
+		panic(fmt.Errorf("DATABASE_DSN is required"))
+	}
+
+	return cfg
+}
+
+func envOrDefault(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+
+	return fallback
 }
