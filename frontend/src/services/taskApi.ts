@@ -3,7 +3,6 @@ import type {
   TasksResponse,
   CreateTaskRequest,
   CompleteTaskRequest,
-  MetricsResponse,
 } from "./models";
 
 // Use relative endpoints (dev proxy or same-origin). API_BASE removed so calls use the provided path directly.
@@ -49,11 +48,14 @@ async function apiRequest<T>(
 
 function getErrorMessage(payload: unknown, status: number): string {
   if (isObject(payload)) {
-    if (typeof (payload as Record<string, unknown>).message === "string") {
-      return (payload as Record<string, any>).message as string;
+    const message = payload.message;
+    if (typeof message === "string") {
+      return message;
     }
-    if (typeof (payload as Record<string, unknown>).error === "string") {
-      return (payload as Record<string, any>).error as string;
+
+    const error = payload.error;
+    if (typeof error === "string") {
+      return error;
     }
   }
   return `Request failed with status ${status}`;
@@ -128,13 +130,5 @@ export const taskApi = {
     await apiRequest<null>("/tasks", {
       method: "DELETE",
     });
-  },
-};
-
-export const metricsApi = {
-  async getMetrics(): Promise<MetricsResponse> {
-    const resp = await apiRequest<MetricsResponse>("/metrics");
-    if (!resp) throw new Error("Failed to load metrics");
-    return resp;
   },
 };

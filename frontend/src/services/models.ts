@@ -24,10 +24,3 @@ export type CreateTaskRequest = {
 export type CompleteTaskRequest = {
   completed: boolean;
 };
-
-export type MetricsResponse = {
-  memory_usage_mb: number;
-  uptime_seconds: number;
-  goroutines: number;
-  cpu_cores: number;
-};

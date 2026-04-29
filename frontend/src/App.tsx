@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState, type FormEventHandler } from "react";
 import "./App.css";
-import { taskApi, metricsApi } from "./services/taskApi";
+import { taskApi } from "./services/taskApi";
 // NOTE: API calls use relative paths (e.g. "/tasks" and "/metrics").
 // In development Vite proxies these endpoints to the backend (see vite.config.ts).
 // This avoids cross-origin preflight and removes the need for VITE_API_BASE.
-import type { Task, MetricsResponse } from "./services/models";
+import type { Task } from "./services/models";
 
 type TaskFilter = "all" | "completed" | "not_completed";
 
@@ -46,10 +46,6 @@ function App() {
   const [taskActionId, setTaskActionId] = useState<number | null>(null);
   const [isTaskActionLoading, setIsTaskActionLoading] = useState(false);
 
-  const [metrics, setMetrics] = useState<MetricsResponse | null>(null);
-  const [isMetricsLoading, setIsMetricsLoading] = useState(false);
-  const [metricsError, setMetricsError] = useState<string | null>(null);
-
   const loadTasks = useCallback(async () => {
     setIsTasksLoading(true);
     setTasksError(null);
@@ -75,31 +71,15 @@ function App() {
     }
   }, [taskFilter]);
 
-  const loadMetrics = useCallback(async () => {
-    setIsMetricsLoading(true);
-    setMetricsError(null);
-
-    try {
-      const loadedMetrics = await metricsApi.getMetrics();
-      setMetrics(loadedMetrics);
-    } catch (error) {
-      if (error instanceof Error) {
-        setMetricsError(error.message);
-      } else {
-        setMetricsError("Failed to load metrics");
-      }
-    } finally {
-      setIsMetricsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    void loadTasks();
+    const timeoutId = window.setTimeout(() => {
+      void loadTasks();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [loadTasks]);
-
-  useEffect(() => {
-    void loadMetrics();
-  }, [loadMetrics]);
 
   const handleCreateTask: FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
@@ -241,38 +221,10 @@ function App() {
         <header className="panel">
           <div className="panel-head">
             <h1>TodoList</h1>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => void loadMetrics()}
-              disabled={isMetricsLoading}
-            >
-              {isMetricsLoading ? "Обновление метрик..." : "Обновить метрики"}
-            </button>
-          </div>
-          {metricsError ? <p className="error">{metricsError}</p> : null}
-          <div className="metrics-grid">
-            <article className="metric">
-              <span>Память</span>
-              <strong>{metrics?.memory_usage_mb ?? "—"} MB</strong>
-            </article>
-            <article className="metric">
-              <span>Uptime</span>
-              <strong>{metrics?.uptime_seconds ?? "—"} s</strong>
-            </article>
-            <article className="metric">
-              <span>Goroutines</span>
-              <strong>{metrics?.goroutines ?? "—"}</strong>
-            </article>
-            <article className="metric">
-              <span>CPU Cores</span>
-              <strong>{metrics?.cpu_cores ?? "—"}</strong>
-            </article>
           </div>
         </header>
-
         <section className="panel">
-          <h2>Создать задачу</h2>
+          <h1>Создать задачу</h1>
           <form className="task-form" onSubmit={handleCreateTask}>
             <label>
               Название
@@ -324,9 +276,8 @@ function App() {
           {taskSearchError ? <p className="error">{taskSearchError}</p> : null}
           {foundTask ? (
             <article
-              className={`task-card search-task-result ${
-                foundTask.completed ? "done" : ""
-              }`}
+              className={`task-card search-task-result ${foundTask.completed ? "done" : ""
+                }`}
             >
               <h3>
                 #{foundTask.id} {foundTask.title || "Без названия"}
@@ -457,7 +408,7 @@ function App() {
             </ul>
           ) : null}
         </section>
-      </main>
+      </main >
     </>
   );
 }
