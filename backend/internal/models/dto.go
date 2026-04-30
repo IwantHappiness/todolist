@@ -16,7 +16,7 @@ type TaskDTO struct {
 
 func (t TaskDTO) Validate() error {
 	if t.Title == "" {
-		return errors.New("Title is empty")
+		return errors.New("title is empty")
 	}
 
 	return nil

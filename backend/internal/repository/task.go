@@ -128,7 +128,7 @@ func (r *TaskPgRepository) Update(ctx context.Context, id int, taskDTO models.Ta
 		&task.CompletedAt)
 
 	if err == pgx.ErrNoRows {
-		return models.Task{}, errors.New("Task not found")
+		return models.Task{}, errors.New("task not found")
 	}
 
 	return task, err
@@ -151,7 +151,7 @@ func (r *TaskPgRepository) Complete(ctx context.Context, id int, completed model
 		&task.CompletedAt)
 
 	if err == pgx.ErrNoRows {
-		return models.Task{}, errors.New("Task not found")
+		return models.Task{}, errors.New("task not found")
 	}
 
 	return task, err
