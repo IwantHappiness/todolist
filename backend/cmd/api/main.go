@@ -10,12 +10,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/IwantHappiness/todolist/internal/handler"
-	"github.com/IwantHappiness/todolist/internal/repository"
-	"github.com/IwantHappiness/todolist/internal/service"
+	handler "github.com/IwantHappiness/todolist/internal/handler"
+	infraPostgres "github.com/IwantHappiness/todolist/internal/infrastructure/postgres"
+	repository "github.com/IwantHappiness/todolist/internal/repository/postgres"
+	service "github.com/IwantHappiness/todolist/internal/service"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
 )
 
 func main() {
@@ -24,16 +24,16 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	conn, err := pgx.Connect(ctx, cfg.DatabaseDSN)
+	pool, err := infraPostgres.Open(ctx, cfg.DatabaseDSN)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v:", err)
 	}
-	defer conn.Close(context.Background())
+	defer pool.Close()
 
 	log.Println("Connected db succerful")
 
-	repo := repository.NewTaskPgRepository(conn)
-	scv := service.NewTaskService(repo)
+	repo := repository.New(pool)
+	scv := service.NewService(repo)
 	handler := handler.NewTaskHandler(scv)
 
 	gin.SetMode(cfg.GIN_MODE)

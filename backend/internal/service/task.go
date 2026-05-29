@@ -3,46 +3,56 @@ package service
 import (
 	"context"
 
-	"github.com/IwantHappiness/todolist/internal/models"
-	"github.com/IwantHappiness/todolist/internal/repository"
+	taskdomain "github.com/IwantHappiness/todolist/internal/models"
 )
 
-type taskService struct {
-	repo repository.TaskRepository
+type Repository interface {
+	GetAll(ctx context.Context) ([]taskdomain.Task, error)
+	GetByID(ctx context.Context, id int) (taskdomain.Task, error)
+	GetByCompleted(ctx context.Context, completed bool) ([]taskdomain.Task, error)
+	Create(ctx context.Context, task taskdomain.TaskDTO) (taskdomain.Task, error)
+	Update(ctx context.Context, id int, task taskdomain.TaskDTO) (taskdomain.Task, error)
+	Complete(ctx context.Context, id int, completed taskdomain.CompleteTaskDTO) (taskdomain.Task, error)
+	Delete(ctx context.Context, id int) error
+	DeleteAll(ctx context.Context) error
 }
 
-func NewTaskService(repo repository.TaskRepository) TaskService {
-	return &taskService{repo: repo}
+type Service struct {
+	repo Repository
 }
 
-func (s *taskService) GetAllTasks(ctx context.Context) ([]models.Task, error) {
+func NewService(repo Repository) *Service {
+	return &Service{repo: repo}
+}
+
+func (s *Service) GetAllTasks(ctx context.Context) ([]taskdomain.Task, error) {
 	return s.repo.GetAll(ctx)
 }
 
-func (s *taskService) GetTaskByID(ctx context.Context, id int) (models.Task, error) {
+func (s *Service) GetTaskByID(ctx context.Context, id int) (taskdomain.Task, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *taskService) GetByCompleted(ctx context.Context, completed bool) ([]models.Task, error) {
+func (s *Service) GetByCompleted(ctx context.Context, completed bool) ([]taskdomain.Task, error) {
 	return s.repo.GetByCompleted(ctx, completed)
 }
 
-func (s *taskService) CreateTask(ctx context.Context, task models.TaskDTO) (models.Task, error) {
+func (s *Service) CreateTask(ctx context.Context, task taskdomain.TaskDTO) (taskdomain.Task, error) {
 	return s.repo.Create(ctx, task)
 }
 
-func (s *taskService) DeleteTaskByID(ctx context.Context, id int) error {
+func (s *Service) DeleteTaskByID(ctx context.Context, id int) error {
 	return s.repo.Delete(ctx, id)
 }
 
-func (s *taskService) DeleteAllTask(ctx context.Context) error {
+func (s *Service) DeleteAllTask(ctx context.Context) error {
 	return s.repo.DeleteAll(ctx)
 }
 
-func (s *taskService) UpdateTask(ctx context.Context, id int, task models.TaskDTO) (models.Task, error) {
+func (s *Service) UpdateTask(ctx context.Context, id int, task taskdomain.TaskDTO) (taskdomain.Task, error) {
 	return s.repo.Update(ctx, id, task)
 }
 
-func (s *taskService) CompleteTaskStatus(ctx context.Context, id int, completed models.CompleteTaskDTO) (models.Task, error) {
+func (s *Service) CompleteTaskStatus(ctx context.Context, id int, completed taskdomain.CompleteTaskDTO) (taskdomain.Task, error) {
 	return s.repo.Complete(ctx, id, completed)
 }
